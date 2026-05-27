@@ -498,10 +498,10 @@ body{
 /* Expandable detail */
 .prod-expand{
   max-height:0;overflow:hidden;
-  transition:max-height .7s cubic-bezier(.4,0,.2,1), opacity .5s ease;
+  transition:max-height .65s cubic-bezier(.4,0,.2,1), opacity .45s ease;
   opacity:0;
 }
-.prod-expand.open{max-height:500px;opacity:1}
+.prod-expand.open{max-height:520px;opacity:1}
 .prod-detail{
   padding:0 32px 32px;
   border-top:1px solid rgba(255,255,255,.05);
@@ -518,19 +518,62 @@ body{
 }
 .prod-feature-text h5{font-size:14px;font-weight:700;color:#dce4e4;margin-bottom:2px}
 .prod-feature-text p{font-size:12px;color:#849495;line-height:1.5}
+
+/* Expand trigger button */
 .prod-expand-btn{
   display:flex;align-items:center;justify-content:space-between;
   padding:18px 32px;
   font-size:13px;font-weight:700;color:#00dbe7;
   border-top:1px solid rgba(255,255,255,.05);
-  transition:background .2s;
+  cursor:pointer;
+  background:none;border-left:none;border-right:none;border-bottom:none;
+  width:100%;text-align:left;
+  transition:background .25s, color .25s;
+  /* Pulsing hint to invite interaction */
+  position:relative;
+  overflow:hidden;
 }
-.prod-card:hover .prod-expand-btn{background:rgba(255,255,255,.02)}
+.prod-expand-btn::after{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(0,219,231,.06),transparent);
+  transform:translateX(-100%);
+  animation:shimmer-hint 3s ease-in-out infinite;
+}
+@keyframes shimmer-hint{
+  0%{transform:translateX(-100%)}
+  40%,100%{transform:translateX(100%)}
+}
+.prod-expand-btn:hover{background:rgba(0,219,231,.05);color:#74f5ff}
+.prod-expand-btn:hover::after{animation:none}
+
 .expand-arrow{
   transition:transform .4s cubic-bezier(.4,0,.2,1);
-  display:flex;
+  display:flex;pointer-events:none;
 }
 .expand-arrow.open{transform:rotate(180deg)}
+
+/* Focus/dim effect: when one card is open, others dim slightly */
+.products-grid.has-open .prod-card:not(.is-open){
+  opacity:.55;
+  transform:scale3d(.97,.97,1);
+  filter:brightness(.8);
+}
+.prod-card{
+  transition:
+    border-color .4s ease,
+    box-shadow .4s ease,
+    opacity .45s ease,
+    transform .45s cubic-bezier(.4,0,.2,1),
+    filter .45s ease;
+}
+.prod-card.is-open{
+  border-color:rgba(0,219,231,.3) !important;
+  box-shadow:0 0 60px rgba(0,219,231,.1), 0 20px 60px rgba(0,0,0,.5);
+  transform:scale3d(1,1,1) !important;
+  opacity:1 !important;
+  filter:none !important;
+}
 
 /* ── COMPLIANCE ──────────────────────────── */
 .compliance-section{background:#080f10;padding:120px 5vw}
@@ -1065,7 +1108,7 @@ footer{
     <div class="products-grid" style="margin-top:56px">
 
       <!-- Card 1: HYBRID-AI -->
-      <div class="prod-card featured" data-reveal="up" data-delay="1" onclick="toggleCard(this)">
+      <div class="prod-card featured" data-reveal="up" data-delay="1">
         <div class="prod-card-header">
           <div class="prod-badge">Edición Insignia</div>
           <div class="prod-icon fill">
@@ -1113,7 +1156,7 @@ footer{
       </div>
 
       <!-- Card 2: FLOW -->
-      <div class="prod-card" data-reveal="up" data-delay="2" onclick="toggleCard(this)">
+      <div class="prod-card" data-reveal="up" data-delay="2">
         <div class="prod-card-header">
           <div class="prod-badge">Edición Empresarial</div>
           <div class="prod-icon ghost">
@@ -1161,7 +1204,7 @@ footer{
       </div>
 
       <!-- Card 3: TRAINING -->
-      <div class="prod-card" data-reveal="up" data-delay="3" onclick="toggleCard(this)">
+      <div class="prod-card" data-reveal="up" data-delay="3">
         <div class="prod-card-header">
           <div class="prod-badge">Edición Educativa</div>
           <div class="prod-icon ghost">
@@ -1475,20 +1518,41 @@ footer{
 })();
 
 // ── PRODUCT CARD EXPAND ───────────────────────────────────
-function toggleCard(card){
-  const expand = card.querySelector('.prod-expand');
-  const arrow = card.querySelector('.expand-arrow');
-  const isOpen = expand.classList.contains('open');
-  // close all
-  document.querySelectorAll('.prod-expand.open').forEach(function(e){
-    e.classList.remove('open');
-    e.closest('.prod-card').querySelector('.expand-arrow').classList.remove('open');
-  });
-  if(!isOpen){
-    expand.classList.add('open');
-    arrow.classList.add('open');
+(function(){
+  const grid = document.querySelector('.products-grid');
+
+  function closeAll(){
+    document.querySelectorAll('.prod-card').forEach(function(c){
+      c.querySelector('.prod-expand').classList.remove('open');
+      c.querySelector('.expand-arrow').classList.remove('open');
+      c.classList.remove('is-open');
+    });
+    grid.classList.remove('has-open');
   }
-}
+
+  document.querySelectorAll('.prod-expand-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation(); // never bubble to parent card
+      const card = btn.closest('.prod-card');
+      const expand = card.querySelector('.prod-expand');
+      const arrow = btn.querySelector('.expand-arrow');
+      const isOpen = expand.classList.contains('open');
+
+      closeAll(); // accordion: close everything first
+
+      if(!isOpen){
+        expand.classList.add('open');
+        arrow.classList.add('open');
+        card.classList.add('is-open');
+        grid.classList.add('has-open');
+        // smooth scroll so the opened card stays visible
+        setTimeout(function(){
+          card.scrollIntoView({behavior:'smooth', block:'nearest'});
+        }, 80);
+      }
+    });
+  });
+})();
 
 // ── SMOOTH ANCHOR SCROLL ──────────────────────────────────
 document.querySelectorAll('a[href^="#"]').forEach(function(a){
