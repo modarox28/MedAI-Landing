@@ -411,7 +411,7 @@ tailwind.config = {
     display: flex; align-items: center; justify-content: center;
     transition: opacity 0.6s, visibility 0.6s;
   }
-  #loader.hidden { opacity: 0; visibility: hidden; }
+  #loader.loader-done { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 
   .loader-bar {
     width: 160px; height: 2px;
@@ -1067,11 +1067,18 @@ tailwind.config = {
 <!-- ══════════════════════════════ SCRIPTS ══ -->
 <script>
 // ── Loader ──────────────────────────────────────────────
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('loader').classList.add('hidden');
-  }, 1400);
-});
+function hideLoader() {
+  const loader = document.getElementById('loader');
+  if (loader) loader.classList.add('loader-done');
+}
+// Fire on load, DOMContentLoaded, or fallback after 2.5s
+if (document.readyState === 'complete') {
+  setTimeout(hideLoader, 1200);
+} else {
+  window.addEventListener('load', () => setTimeout(hideLoader, 1200));
+  document.addEventListener('DOMContentLoaded', () => setTimeout(hideLoader, 1500));
+}
+setTimeout(hideLoader, 2500); // hard fallback
 
 // ── Particles ───────────────────────────────────────────
 (function() {
